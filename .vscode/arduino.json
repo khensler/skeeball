@@ -1,0 +1,8 @@
+{
+    "programmer": "AVR ISP",
+    "board": "esp32:esp32:esp32wrover",
+    "configuration": "PartitionScheme=default,FlashMode=qio,FlashFreq=80,UploadSpeed=921600,DebugLevel=none",
+    "sketch": "skeeball.ino",
+    "output": "c:\\windows\\TEMP\\",
+    "port": "COM4"
+}

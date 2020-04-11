@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- <meta http-equiv='refresh' content='5'> -->
+        
+
+        <script>
+            function startConnect(){
+            let socket = new WebSocket("ws://" + location.host + "/ws");
+
+            socket.onopen = function(e) {
+                //alert("[open] Connection established");
+                //alert("Sending to server");
+                //socket.send("My name is John");
+            };
+
+            socket.onmessage = function(event) {
+                //alert(`[message] Data received from server: ${event.data}`);
+                console.log(event.data);
+                var msg = JSON.parse(event.data);
+                //console.log(JSON.stringify(msg));
+                if (msg.S) {
+                    //document.getElementById("score").innerHTML=msg.S;
+                    $("#seven_score").sevenSeg({ digits : 3 , value: msg.S, slant : 1 });
+                }
+                if (msg.B) {
+                    //document.getElementById("ball").innerHTML=msg.B;
+                    $("#seven_ball").sevenSeg({ digits : 1 , value: msg.B, slant : 1 });
+                }
+                if (msg.G) {
+                    //document.getElementById("game_on").innerHTML=msg.G;
+                }
+                //console.log(msg.S);
+            };
+
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    //alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                } else {
+                    // e.g. server process killed or network down
+                    // event.code is usually 1006 in this case
+                    //alert('[close] Connection died');
+                }
+                setTimeout(startConnect,1000)
+            };
+
+            socket.onerror = function(error) {
+                //alert(`[error] ${error.message}`);
+                setTimeout(startConnect,1000)
+            };
+            }
+        </script>
+        <style>
+            .score_div{
+                padding: 0.5em; 
+                height: 100px; 
+                width: 300px;
+            }
+
+            .ball_div{
+                padding: 0.5em; 
+                height: 100px; 
+                width: 100px;
+            }
+
+            body{
+                background-color: black;
+            }
+
+            .game_text{
+                color: gold;
+                font-size: 100px;
+            }
+            .ball_text{
+                color: gold;
+                font-size: 50px;
+            }
+        </style>
+    </head>
+    <body onload="startConnect()">
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+        <script src="sevenSeg.js"></script>
+        <div id="text_score" class="game_text">SCORE</div>
+        <div id="seven_score" class="score_div"></div>
+        <div id="ball" class="ball_text">BALLS PLAYED</div>
+        <div id="seven_ball" class="ball_div"></div>
+        <br>Game On: <div id="game_on"></div>
+        <br>
+        <a href='/reset'>Reset</a>
+    </body>
+</html>
