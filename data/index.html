@@ -28,6 +28,7 @@
                     $("#seven_ball").sevenSeg({ digits : 1 , value: msg.B, slant : 1 });
                 }
                 if (msg.G) {
+                    $("#seven_game").sevenSeg({ digits : 1, value: msg.G, slant :1 });
                     //document.getElementById("game_on").innerHTML=msg.G;
                 }
                 //console.log(msg.S);
@@ -61,6 +62,7 @@
                 padding: 0.5em; 
                 height: 100px; 
                 width: 100px;
+                display: inline-block;
             }
 
             body{
@@ -74,6 +76,8 @@
             .ball_text{
                 color: gold;
                 font-size: 50px;
+                display: inline-block;
+                vertical-align: top;
             }
         </style>
     </head>
@@ -83,9 +87,10 @@
         <script src="sevenSeg.js"></script>
         <div id="text_score" class="game_text">SCORE</div>
         <div id="seven_score" class="score_div"></div>
-        <div id="ball" class="ball_text">BALLS PLAYED</div>
+        <div id="ball" class="ball_text">BALLS<br>PLAYED</div>
         <div id="seven_ball" class="ball_div"></div>
-        <br>Game On: <div id="game_on"></div>
+        <div id="text_game_on" class="ball_text">GAME<br>EN</div>
+        <div id="seven_game" class="ball_div"></div>
         <br>
         <a href='/reset'>Reset</a>
     </body>
