@@ -23,7 +23,8 @@ const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
 const byte ball_pin = 33;
-const byte game_pin =32;
+const byte game_pin = 32;
+const byte ball_release_pin = 35;
 
 int score = 0;
 int old_millis = 0;
@@ -35,6 +36,8 @@ int balls_game = 9;
 int game_on = 0;
 char data[400];
 bool send_data=false;
+
+hw_timer_t * timer = NULL;
 
 // Port defaults to 3232
 // ArduinoOTA.setPort(3232);
@@ -87,7 +90,14 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 }
 
 void ball_release(){
-  
+  Serial.println("Ball Release");
+  digitalWrite(ball_release_pin,1);
+  timerAlarmEnable(timer);
+}
+
+void onTimer() {
+  digitalWrite(ball_release_pin,0);
+  timerAlarmDisable(timer);
 }
 
 void do_send_data(){
@@ -164,6 +174,8 @@ void setup() {
   attachInterrupt(ball_pin, do_ball, RISING);
   pinMode(game_pin, INPUT_PULLUP);
   attachInterrupt(game_pin, do_start_game, RISING);
+  pinMode(ball_release_pin, OUTPUT);
+  digitalWrite(ball_release_pin,0);
   
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -220,6 +232,9 @@ void setup() {
 
   ArduinoOTA.begin();
   delay(1000);
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, false);
+  timerAlarmWrite(timer, 30000000, false);
   score=0;
   ball=0;
   game_on=0;
