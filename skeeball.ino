@@ -23,8 +23,8 @@ const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
 const byte ball_pin = 33;
-const byte game_pin = 32;
-const byte ball_release_pin = 35;
+const byte game_pin = 35;
+const byte ball_release_pin = 32;
 
 int score = 0;
 int old_millis = 0;
@@ -96,6 +96,7 @@ void ball_release(){
 }
 
 void onTimer() {
+  Serial.println("End Release");
   digitalWrite(ball_release_pin,0);
   timerAlarmDisable(timer);
 }
@@ -172,7 +173,7 @@ void setup() {
   attachInterrupt(score_pin, do_score, RISING);
   pinMode(ball_pin, INPUT_PULLUP);
   attachInterrupt(ball_pin, do_ball, RISING);
-  pinMode(game_pin, INPUT_PULLUP);
+  pinMode(game_pin, INPUT);
   attachInterrupt(game_pin, do_start_game, RISING);
   pinMode(ball_release_pin, OUTPUT);
   digitalWrite(ball_release_pin,0);
@@ -234,7 +235,7 @@ void setup() {
   delay(1000);
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, false);
-  timerAlarmWrite(timer, 30000000, false);
+  timerAlarmWrite(timer, 10000000, false);
   score=0;
   ball=0;
   game_on=0;
