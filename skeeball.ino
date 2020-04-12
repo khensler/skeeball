@@ -22,9 +22,9 @@ const char* password = "IcarusMelts";
 const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
-const byte ball_pin = 33;
-const byte game_pin = 35;
-const byte ball_release_pin = 32;
+const byte ball_pin = 22;
+const byte game_pin = 21;
+const byte ball_release_pin = 19;
 
 int score = 0;
 int old_millis = 0;
@@ -98,7 +98,10 @@ void ball_release(){
 void onTimer() {
   Serial.println("End Release");
   digitalWrite(ball_release_pin,0);
-  timerAlarmDisable(timer);
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 10000000, false);
+  //timerAlarmDisable(timer);
 }
 
 void do_send_data(){
@@ -234,7 +237,7 @@ void setup() {
   ArduinoOTA.begin();
   delay(1000);
   timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &onTimer, false);
+  timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 10000000, false);
   score=0;
   ball=0;
