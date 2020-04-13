@@ -29,6 +29,7 @@ const byte ball_release_pin = 19;
 int score = 0;
 int old_millis = 0;
 int old_millis_ball = 0;
+int old_millis_game = 0;
 int debounce_score = 15;
 int debounce_ball = 15;
 int ball = 0;
@@ -113,16 +114,20 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 void do_start_game(){
-  if (game_on == 0){
-    game_on = 1;
-    score = 0;
-    ball = 0;
-    Serial.print("Game Start");
-    //ws.pingAll();
-    //ws.printfAll("{\"G\":\"%d\"}",game_on);
-    do_send_data();
+  int diff = millis()-old_millis_game;
+  if (diff> debounce_score || millis() < old_millis){
+    old_millis_game = millis();
+    if (game_on == 0){
+      game_on = 1;
+      score = 0;
+      ball = 0;
+      Serial.print("Game Start");
+      //ws.pingAll();
+      //ws.printfAll("{\"G\":\"%d\"}",game_on);
+      do_send_data();
+    }
+    ball_release();
   }
-  ball_release();
 }
 
 void do_score(){
@@ -176,7 +181,7 @@ void setup() {
   attachInterrupt(score_pin, do_score, RISING);
   pinMode(ball_pin, INPUT_PULLUP);
   attachInterrupt(ball_pin, do_ball, RISING);
-  pinMode(game_pin, INPUT);
+  pinMode(game_pin, INPUT_PULLUP);
   attachInterrupt(game_pin, do_start_game, RISING);
   pinMode(ball_release_pin, OUTPUT);
   digitalWrite(ball_release_pin,0);
