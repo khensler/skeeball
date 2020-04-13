@@ -6,9 +6,14 @@
 
         <script>
             function startConnect(){
-            let socket = new WebSocket("ws://" + location.host + "/ws");
-
-            socket.onopen = function(e) {
+                var ws_url;
+                if (location.protocol == 'https:') {
+                    ws_url = "wss://" + location.host + "/ws";
+                }else{
+                    ws_url = "ws://" + location.host + "/ws";
+                }
+                let socket = new WebSocket(ws_url);
+                socket.onopen = function(e) {
                 //alert("[open] Connection established");
                 //alert("Sending to server");
                 //socket.send("My name is John");

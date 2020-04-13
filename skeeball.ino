@@ -178,11 +178,8 @@ void setup() {
   }
 
   pinMode(score_pin, INPUT_PULLUP);
-  attachInterrupt(score_pin, do_score, RISING);
   pinMode(ball_pin, INPUT_PULLUP);
-  attachInterrupt(ball_pin, do_ball, RISING);
   pinMode(game_pin, INPUT_PULLUP);
-  attachInterrupt(game_pin, do_start_game, RISING);
   pinMode(ball_release_pin, OUTPUT);
   digitalWrite(ball_release_pin,0);
   
@@ -247,6 +244,9 @@ void setup() {
   score=0;
   ball=0;
   game_on=0;
+  attachInterrupt(score_pin, do_score, RISING);
+  attachInterrupt(ball_pin, do_ball, RISING);
+  attachInterrupt(game_pin, do_start_game, RISING);
 }
 
 void loop() {
