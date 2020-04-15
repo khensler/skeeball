@@ -12,8 +12,8 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-//const char* ssid = "SunShine";
-//const char* password = "IcarusMelts";
+//const char* ssid = "SSID";
+//const char* password = "PASSWORD";
 //const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
