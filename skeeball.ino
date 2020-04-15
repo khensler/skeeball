@@ -1,10 +1,3 @@
-//
-// A simple server implementation showing how to:
-//  * serve static messages
-//  * read GET and POST parameters
-//  * handle missing pages / 404s
-//
-
 #include <Arduino.h>
 #include <WiFi.h>
 #include <AsyncTCP.h>
@@ -13,13 +6,15 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+#include <FS.h>
+#include <string.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-const char* ssid = "SunShine";
-const char* password = "IcarusMelts";
-const char* PARAM_MESSAGE = "message";
+//const char* ssid = "SSID";
+//const char* password = "PASSWORD";
+//const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
 const byte ball_pin = 22;
@@ -52,16 +47,16 @@ hw_timer_t * timer = NULL;
 // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
 // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
 
-String processor(const String& var)
-{
-  if(var == "SCORE_TEMPLATE")
-    return String(score);
-  if(var == "BALL_TEMPLATE")
-    return String(ball);
-  if(var == "GAME_TEMPLATE")
-    return String(game_on);
-  return String();
-}
+//String processor(const String& var)
+//{
+//  if(var == "SCORE_TEMPLATE")
+//    return String(score);
+//  if(var == "BALL_TEMPLATE")
+//    return String(ball);
+//  if(var == "GAME_TEMPLATE")
+//    return String(game_on);
+//  return String();
+//}
 
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
@@ -162,6 +157,21 @@ void do_ball(){
 
 void setup() {
   Serial.begin(115200);
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File wificreds = SPIFFS.open("/wifi.txt");
+  String file_ssid = wificreds.readStringUntil('\n');
+  String file_ssid_key = wificreds.readStringUntil('\n');
+  char * ssid = new char [file_ssid.length()+1];
+  strcpy(ssid, file_ssid.c_str());
+  char * password = new char [file_ssid_key.length()+1];
+  strcpy(password, file_ssid_key.c_str());
+  //char * password = new char
+  wificreds.close();
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -172,10 +182,7 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   
-  if (!SPIFFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
+  
 
   pinMode(score_pin, INPUT_PULLUP);
   pinMode(ball_pin, INPUT_PULLDOWN);
