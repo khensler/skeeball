@@ -13,7 +13,7 @@
                     ws_url = "ws://" + location.host + "/ws";
                 }
                 let socket = new WebSocket(ws_url);
-            socket.onopen = function(e) {
+                socket.onopen = function(e) {
                 //alert("[open] Connection established");
                 //alert("Sending to server");
                 //socket.send("My name is John");
@@ -95,14 +95,14 @@
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
         <script src="sevenSeg.js"></script>
         <div id="view_port" class="game_view">
-        <div id="text_score" class="game_text">SCORE</div>
-        <div id="seven_score" class="score_div"></div>
+            <div id="text_score" class="game_text">SCORE</div>
+            <div id="seven_score" class="score_div"></div>
             <div id="ball" class="ball_text">BALLS<br>PLAYED</div>
-        <div id="seven_ball" class="ball_div"></div>
+            <div id="seven_ball" class="ball_div"></div>
             <div id="text_game_on" class="ball_text">GAME<br>EN</div>
             <div id="seven_game" class="ball_div"></div>
-        <br>
-        <a href='/reset'>Reset</a>
+            <br>
+            <a href='/reset'>Reset</a>
         </div>
     </body>
 </html>
