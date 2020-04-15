@@ -6,13 +6,15 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+#include <FS.h>
+#include <string.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-const char* ssid = "SunShine";
-const char* password = "IcarusMelts";
-const char* PARAM_MESSAGE = "message";
+//const char* ssid = "SunShine";
+//const char* password = "IcarusMelts";
+//const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
 const byte ball_pin = 33;
@@ -136,6 +138,21 @@ void do_ball(){
 
 void setup() {
   Serial.begin(115200);
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File wificreds = SPIFFS.open("/wifi.txt");
+  String file_ssid = wificreds.readStringUntil('\n');
+  String file_ssid_key = wificreds.readStringUntil('\n');
+  char * ssid = new char [file_ssid.length()+1];
+  strcpy(ssid, file_ssid.c_str());
+  char * password = new char [file_ssid_key.length()+1];
+  strcpy(password, file_ssid_key.c_str());
+  //char * password = new char
+  wificreds.close();
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -146,10 +163,7 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   
-  if (!SPIFFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
+  
 
   pinMode(score_pin, INPUT_PULLUP);
   attachInterrupt(score_pin, do_score, RISING);
