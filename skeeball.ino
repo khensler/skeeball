@@ -167,7 +167,7 @@ void setup() {
 
   pinMode(score_pin, INPUT_PULLUP);
   attachInterrupt(score_pin, do_score, RISING);
-  pinMode(ball_pin, INPUT_PULLUP);
+  pinMode(ball_pin, INPUT_PULLDOWN);
   attachInterrupt(ball_pin, do_ball, RISING);
   pinMode(game_pin, INPUT_PULLUP);
   attachInterrupt(game_pin, do_start_game, RISING);
