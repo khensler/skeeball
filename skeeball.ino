@@ -17,12 +17,14 @@ AsyncWebSocket ws("/ws");
 //const char* PARAM_MESSAGE = "message";
 
 const byte score_pin = 23;
-const byte ball_pin = 33;
-const byte game_pin =32;
+const byte ball_pin = 22;
+const byte game_pin = 21;
+const byte ball_release_pin = 19;
 
 int score = 0;
 int old_millis = 0;
 int old_millis_ball = 0;
+int old_millis_game = 0;
 int debounce_score = 15;
 int debounce_ball = 15;
 int ball = 0;
@@ -30,6 +32,8 @@ int balls_game = 9;
 int game_on = 0;
 char data[400];
 bool send_data=false;
+
+hw_timer_t * timer = NULL;
 
 // Port defaults to 3232
 // ArduinoOTA.setPort(3232);
@@ -82,7 +86,18 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 }
 
 void ball_release(){
-  
+  Serial.println("Ball Release");
+  digitalWrite(ball_release_pin,1);
+  timerAlarmEnable(timer);
+}
+
+void onTimer() {
+  Serial.println("End Release");
+  digitalWrite(ball_release_pin,0);
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 10000000, false);
+  //timerAlarmDisable(timer);
 }
 
 void do_send_data(){
@@ -94,16 +109,20 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 void do_start_game(){
-  if (game_on == 0){
-    game_on = 1;
-    score = 0;
-    ball = 0;
-    Serial.print("Game Start");
-    //ws.pingAll();
-    //ws.printfAll("{\"G\":\"%d\"}",game_on);
-    do_send_data();
+  int diff = millis()-old_millis_game;
+  if (diff> debounce_score || millis() < old_millis){
+    old_millis_game = millis();
+    if (game_on == 0){
+      game_on = 1;
+      score = 0;
+      ball = 0;
+      Serial.print("Game Start");
+      //ws.pingAll();
+      //ws.printfAll("{\"G\":\"%d\"}",game_on);
+      do_send_data();
+    }
+    ball_release();
   }
-  ball_release();
 }
 
 void do_score(){
@@ -166,11 +185,10 @@ void setup() {
   
 
   pinMode(score_pin, INPUT_PULLUP);
-  attachInterrupt(score_pin, do_score, RISING);
   pinMode(ball_pin, INPUT_PULLDOWN);
-  attachInterrupt(ball_pin, do_ball, RISING);
   pinMode(game_pin, INPUT_PULLUP);
-  attachInterrupt(game_pin, do_start_game, RISING);
+  pinMode(ball_release_pin, OUTPUT);
+  digitalWrite(ball_release_pin,0);
   
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -227,9 +245,15 @@ void setup() {
 
   ArduinoOTA.begin();
   delay(1000);
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 10000000, false);
   score=0;
   ball=0;
   game_on=0;
+  attachInterrupt(score_pin, do_score, RISING);
+  attachInterrupt(ball_pin, do_ball, RISING);
+  attachInterrupt(game_pin, do_start_game, RISING);
 }
 
 void loop() {
