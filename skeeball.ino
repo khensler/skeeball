@@ -1,10 +1,3 @@
-//
-// A simple server implementation showing how to:
-//  * serve static messages
-//  * read GET and POST parameters
-//  * handle missing pages / 404s
-//
-
 #include <Arduino.h>
 #include <WiFi.h>
 #include <AsyncTCP.h>
@@ -48,16 +41,16 @@ bool send_data=false;
 // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
 // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
 
-String processor(const String& var)
-{
-  if(var == "SCORE_TEMPLATE")
-    return String(score);
-  if(var == "BALL_TEMPLATE")
-    return String(ball);
-  if(var == "GAME_TEMPLATE")
-    return String(game_on);
-  return String();
-}
+//String processor(const String& var)
+//{
+//  if(var == "SCORE_TEMPLATE")
+//    return String(score);
+//  if(var == "BALL_TEMPLATE")
+//    return String(ball);
+//  if(var == "GAME_TEMPLATE")
+//    return String(game_on);
+//  return String();
+//}
 
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
