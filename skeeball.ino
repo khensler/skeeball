@@ -9,17 +9,20 @@
 #include <FS.h>
 #include <string.h>
 
+
+// Setup Async Servers
+
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-//const char* ssid = "SSID";
-//const char* password = "PASSWORD";
-//const char* PARAM_MESSAGE = "message";
+//Setup Pins
 
 const byte score_pin = 23;
 const byte ball_pin = 22;
 const byte game_pin = 21;
 const byte ball_release_pin = 19;
+
+//Global Variables
 
 int score = 0;
 int old_millis = 0;
@@ -33,38 +36,22 @@ int game_on = 0;
 char data[400];
 bool send_data=false;
 
+//Timer 
+
 hw_timer_t * timer = NULL;
 
-// Port defaults to 3232
-// ArduinoOTA.setPort(3232);
-// Hostname defaults to esp3232-[MAC]
-// ArduinoOTA.setHostname("myesp32");
-
-// No authentication by default
-// ArduinoOTA.setPassword("admin");
-
-// Password can be set with it's md5 value as well
-// MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-// ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
-
-//String processor(const String& var)
-//{
-//  if(var == "SCORE_TEMPLATE")
-//    return String(score);
-//  if(var == "BALL_TEMPLATE")
-//    return String(ball);
-//  if(var == "GAME_TEMPLATE")
-//    return String(game_on);
-//  return String();
-//}
-
+//Handle Websocket Events
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
 
   if(type == WS_EVT_CONNECT){
 
+    //Websocket Connect 
+
     Serial.println("Websocket client connection received");
-   // ws.printfAll("Connect");
+
+    //Send Values to all clients
+
     ws.printfAll("{\"S\":\"%d\"}",score);
     ws.printfAll("{\"B\":\"%d\"}",ball);
     ws.printfAll("{\"G\":\"%d\"}",game_on);
@@ -86,92 +73,116 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 }
 
 void ball_release(){
+  //Trigger Ball Relese Solenoid
+
   Serial.println("Ball Release");
   digitalWrite(ball_release_pin,1);
+  
+  //Enable Timer to turn off Solenoid
+
   timerAlarmEnable(timer);
 }
 
 void onTimer() {
+  //Turn Off Ball Release Solenoid
   Serial.println("End Release");
   digitalWrite(ball_release_pin,0);
+
+  //Reset Timer Configuration
+
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 10000000, false);
-  //timerAlarmDisable(timer);
 }
 
 void do_send_data(){
+  //Set Send Data from Inturrupt Handler
+  //Cannot send from here due to ISR Reboot 
+  //Probably a way to do this via volitale envionrment calls but this is easier
+
   send_data = true;
 }
 
 void notFound(AsyncWebServerRequest *request) {
+  //Handle 404
   request->send(404, "text/plain", "Not found");
 }
 
 void do_start_game(){
+  //Inturrupt Handler for game start button press
+  //Debounce
   int diff = millis()-old_millis_game;
   if (diff> debounce_score || millis() < old_millis){
     old_millis_game = millis();
+    //Check if game is already enabled
     if (game_on == 0){
+      //Reset all values and start new game
       game_on = 1;
       score = 0;
       ball = 0;
       Serial.print("Game Start");
-      //ws.pingAll();
-      //ws.printfAll("{\"G\":\"%d\"}",game_on);
+      //Send data to connected Websocket clients
       do_send_data();
     }
+    //Release the balls
     ball_release();
   }
 }
 
 void do_score(){
+  //Inturrupt Handler for score pins
+  //Debounce
   int diff = millis()-old_millis;
   if (diff> debounce_score || millis() < old_millis){
     old_millis = millis();
-    Serial.printf("TIME: %d\n", diff);
+    //Add 10 to score
+    //All score switches connect to the same pin and each switch is worth 10 points
+    //As the ball travels down the path it will trigger the appropriate number of switches
     score=score+10;
     Serial.printf("Score: %d\n", score);
+    //Send data to connected Websocket clients
     do_send_data();
   }
 }
 
 void do_ball(){
+  //Inturrupt Handler for ball count pin
+  //Debounce
   int diff = millis()-old_millis_ball;
-  //Serial.printf("TIME: %d\n", diff);
   if (diff> debounce_ball || millis() < old_millis_ball){
     old_millis_ball = millis();
-    Serial.printf("TIME: %d\n", diff);
+    //Count Ball
     ball= ball + 1;
+    //If played balls is >= to balls/game disable game
     if (ball >= balls_game){
-      //score = 0;
-      //ball = 0;
       game_on = 0;
-      //ws.printfAll("{\"G\":\"%d\"}",game_on);
     }
     Serial.printf("Ball: %d\n", ball);
-    //ws.printfAll("{\"B\":\"%d\"}",ball);
+    //Send Data to connected Websocket Clients
     do_send_data();
   }
 }
 
 void setup() {
   Serial.begin(115200);
+  //Check for SPIFFS file system to host web content
   if (!SPIFFS.begin(true)) {
     Serial.println("An Error has occurred while mounting SPIFFS");
     return;
   }
-
+  //Read wifi creds from SPIFFS 
   File wificreds = SPIFFS.open("/wifi.txt");
   String file_ssid = wificreds.readStringUntil('\n');
   String file_ssid_key = wificreds.readStringUntil('\n');
+  //Convert to char * for wifi connect
   char * ssid = new char [file_ssid.length()+1];
   strcpy(ssid, file_ssid.c_str());
   char * password = new char [file_ssid_key.length()+1];
   strcpy(password, file_ssid_key.c_str());
-  //char * password = new char
+  //close file
   wificreds.close();
 
+  //Set WIFI to station momde and connect
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -179,44 +190,46 @@ void setup() {
     return;
   }
 
+  //Print IP.  Also avalbile via multicast DNS from OTA
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   
-  
+  //Set pin modes
 
   pinMode(score_pin, INPUT_PULLUP);
   pinMode(ball_pin, INPUT_PULLDOWN);
   pinMode(game_pin, INPUT_PULLUP);
   pinMode(ball_release_pin, OUTPUT);
+
+  //Make sure Solenoid doesn't release 
+
   digitalWrite(ball_release_pin,0);
   
+  //Add webserver and sebsocket Handlers
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   
-  //server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    //request->send(200, "text/plain", "Hello, world");
-  //  sprintf(data, "<html><head> <meta http-equiv='refresh' content='5'></head><body><h1>Score: %d<br>Ball: %d<br>Game On: %d</h1><br><a href='/reset'>Reset</a></body></html>", score, ball, game_on);
-  //  request->send(200, "text/html", data);
-  //});
-  
+  //Define root request on webserver
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    //request->send(200, "text/plain", "Hello, world");
-    //sprintf(data, "<html><head></head><body><h1>Score: %d<br>Ball: %d<br>Game On: %d</h1><br><a href='/reset'>Reset</a></body></html>", score, ball, game_on);
-    //request->send(200, "text/html", data);
-    //request->send(SPIFFS, "/index.html", String(), false, processor);
+    //Send index.html from SPIFFS
     request->send(SPIFFS, "/index.html");
   });
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request){
+    //Restart Micro Controller
     request->send(200, "text/html", "<html><head> <meta http-equiv='refresh' content='10;url=/'></head><body><h1>RESET!!</h1></body></html>");
     ESP.restart();
   });
   server.on("/sevenSeg.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    //Send sevenSeg.js from SPIFFS
     request->send(SPIFFS, "/sevenSeg.js");
   });
   server.onNotFound(notFound);
 
   server.begin();
 
+  //ArduinoOTA Code from example
     ArduinoOTA
     .onStart([]() {
       String type;
@@ -244,26 +257,41 @@ void setup() {
     });
 
   ArduinoOTA.begin();
+
+  //Delya to prevent false inital score and ball count
+
   delay(1000);
+  
+  //Setup ball release Solenoid timer 
+
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 10000000, false);
+  
+  //Reset Values 
+
   score=0;
   ball=0;
   game_on=0;
+
+  //attachInterrupts to handle ball and game start actions
+
   attachInterrupt(score_pin, do_score, RISING);
   attachInterrupt(ball_pin, do_ball, RISING);
   attachInterrupt(game_pin, do_start_game, RISING);
 }
 
 void loop() {
+  //All game logic is handled in Inturrupts 
+  //OTA Handel
   ArduinoOTA.handle();
+  //Clean up improperly disconnect WebSockets
   ws.cleanupClients();
+  //Send data to WebSockets
   if (send_data == true){
     ws.printfAll("{\"S\":\"%d\"}",score);
     ws.printfAll("{\"B\":\"%d\"}",ball);
     ws.printfAll("{\"G\":\"%d\"}",game_on);
     send_data = false;
-
   }
 }
