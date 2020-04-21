@@ -174,17 +174,21 @@ void setup() {
   File wificreds = SPIFFS.open("/wifi.txt");
   String file_ssid = wificreds.readStringUntil('\n');
   String file_ssid_key = wificreds.readStringUntil('\n');
+  file_ssid.trim();
+  file_ssid_key.trim();
   //Convert to char * for wifi connect
   char * ssid = new char [file_ssid.length()+1];
-  strcpy(ssid, file_ssid.c_str());
+  file_ssid.toCharArray(ssid,file_ssid.length()+1);
   char * password = new char [file_ssid_key.length()+1];
-  strcpy(password, file_ssid_key.c_str());
+  file_ssid_key.toCharArray(password,file_ssid_key.length()+1);
   //close file
   wificreds.close();
+
 
   //Set WIFI to station momde and connect
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("WiFi Failed!\n");
     return;
@@ -294,4 +298,5 @@ void loop() {
     ws.printfAll("{\"G\":\"%d\"}",game_on);
     send_data = false;
   }
+  //Serial.println(digitalRead(score_pin));
 }
