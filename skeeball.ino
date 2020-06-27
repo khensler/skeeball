@@ -200,7 +200,8 @@ void setup() {
   
   //Set pin modes
 
-  pinMode(score_pin, INPUT_PULLDOWN);
+  //pinMode(score_pin, INPUT_PULLDOWN);
+  pinMode(score_pin, INPUT);
   pinMode(ball_pin, INPUT_PULLDOWN);
   pinMode(game_pin, INPUT_PULLUP);
   pinMode(ball_release_pin, OUTPUT);
