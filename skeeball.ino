@@ -28,8 +28,8 @@ int score = 0;
 int old_millis = 0;
 int old_millis_ball = 0;
 int old_millis_game = 0;
-int debounce_score = 15;
-int debounce_ball = 15;
+int debounce_score = 50;
+int debounce_ball = 150;
 int ball = 0;
 int balls_game = 9;
 int game_on = 0;
@@ -121,9 +121,8 @@ void do_start_game(){
       score = 0;
       ball = 0;
       Serial.print("Game Start");
-      //Send data to connected Websocket clients
-      do_send_data();
     }
+    do_send_data();
     //Release the balls
     ball_release();
   }
@@ -131,17 +130,21 @@ void do_start_game(){
 
 void do_score(){
   //Inturrupt Handler for score pins
-  //Debounce
-  int diff = millis()-old_millis;
-  if (diff> debounce_score || millis() < old_millis){
-    old_millis = millis();
-    //Add 10 to score
-    //All score switches connect to the same pin and each switch is worth 10 points
-    //As the ball travels down the path it will trigger the appropriate number of switches
-    score=score+10;
-    Serial.printf("Score: %d\n", score);
-    //Send data to connected Websocket clients
-    do_send_data();
+  //Check if game is enabled
+  if(game_on ==1){
+    //Debounce
+    int diff = millis()-old_millis;
+    Serial.printf("Diff: %d\n",diff);
+    if (diff> debounce_score || millis() < old_millis){
+      old_millis = millis();
+      //Add 10 to score
+      //All score switches connect to the same pin and each switch is worth 10 points
+      //As the ball travels down the path it will trigger the appropriate number of switches
+      score=score+10;
+      Serial.printf("Score: %d\n", score);
+      //Send data to connected Websocket clients
+      do_send_data();
+    }
   }
 }
 
@@ -281,9 +284,9 @@ void setup() {
 
   //attachInterrupts to handle ball and game start actions
 
-  attachInterrupt(score_pin, do_score, RISING);
-  attachInterrupt(ball_pin, do_ball, RISING);
-  attachInterrupt(game_pin, do_start_game, RISING);
+  attachInterrupt(digitalPinToInterrupt(score_pin), do_score, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ball_pin), do_ball, HIGH);
+  attachInterrupt(digitalPinToInterrupt(game_pin), do_start_game, HIGH);
 }
 
 void loop() {

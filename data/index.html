@@ -14,44 +14,34 @@
                 }
                 let socket = new WebSocket(ws_url);
                 socket.onopen = function(e) {
-                //alert("[open] Connection established");
-                //alert("Sending to server");
-                //socket.send("My name is John");
             };
 
             socket.onmessage = function(event) {
-                //alert(`[message] Data received from server: ${event.data}`);
                 console.log(event.data);
                 var msg = JSON.parse(event.data);
                 //console.log(JSON.stringify(msg));
                 if (msg.S) {
-                    //document.getElementById("score").innerHTML=msg.S;
                     $("#seven_score").sevenSeg({ digits : 3 , value: msg.S, slant : 1 });
                 }
                 if (msg.B) {
-                    //document.getElementById("ball").innerHTML=msg.B;
                     $("#seven_ball").sevenSeg({ digits : 1 , value: msg.B, slant : 1 });
                 }
                 if (msg.G) {
                     $("#seven_game").sevenSeg({ digits : 1, value: msg.G, slant :1 });
-                    //document.getElementById("game_on").innerHTML=msg.G;
                 }
                 //console.log(msg.S);
             };
 
             socket.onclose = function(event) {
                 if (event.wasClean) {
-                    //alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+
                 } else {
-                    // e.g. server process killed or network down
-                    // event.code is usually 1006 in this case
-                    //alert('[close] Connection died');
+
                 }
                 setTimeout(startConnect,1000)
             };
 
             socket.onerror = function(error) {
-                //alert(`[error] ${error.message}`);
                 setTimeout(startConnect,1000)
             };
             }
