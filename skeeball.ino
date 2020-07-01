@@ -79,7 +79,9 @@ void ball_release(){
   digitalWrite(ball_release_pin,1);
   
   //Enable Timer to turn off Solenoid
-
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 10000000, false);
   timerAlarmEnable(timer);
 }
 
@@ -297,7 +299,11 @@ void loop() {
   ws.cleanupClients();
   //Send data to WebSockets
   if (send_data == true){
-    ws.printfAll("{\"S\":\"%d\"}",score);
+    if(score == 0){
+      ws.printfAll("{\"S\":\"000\"}");
+    }else{
+    ws.printfAll("{\"S\":\"%d\"}",score);  
+    }
     ws.printfAll("{\"B\":\"%d\"}",ball);
     ws.printfAll("{\"G\":\"%d\"}",game_on);
     send_data = false;
