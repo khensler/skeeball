@@ -8,7 +8,11 @@
 #include <SPIFFS.h>
 #include <FS.h>
 #include <string.h>
+#include <FastLED.h>
 
+//7 Segment setup
+#define NUM_LEDS 7
+#define DATA_PIN 3
 
 // Setup Async Servers
 
@@ -168,6 +172,29 @@ void do_ball(){
   }
 }
 
+void displayNumber(int startindex, int number) {
+  //startindex in digit position.  Multiplied by 7 for each digit. 
+  //number is number to display (not wired in stanard 7 segment display because i'm silly
+  startindex = startindex*7;
+  byte numbers[] = {
+    0b01110111, // 0    
+    0b01100000, // 1
+    0b01011101, // 2
+    0b01111001, // 3
+    0b01101010, // 4
+    0b00111011, // 5
+    0b00111110, // 6
+    0b01100001, // 7
+    0b01111111, // 8
+    0b01101011, // 9   
+  };
+
+  for (int i = 0; i < 7; i++) {
+    leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+  }
+}
+
+
 void setup() {
   Serial.begin(115200);
   //Check for SPIFFS file system to host web content
@@ -215,6 +242,9 @@ void setup() {
 
   digitalWrite(ball_release_pin,0);
   
+  //Setup LEDS
+  FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);  // GRB ordering is typical
+
   //Add webserver and sebsocket Handlers
 
   ws.onEvent(onWsEvent);
@@ -299,6 +329,8 @@ void loop() {
   ws.cleanupClients();
   //Send data to WebSockets
   if (send_data == true){
+    displayNumber(0,ball);
+    FastLED.show();
     if(score == 0){
       ws.printfAll("{\"S\":\"000\"}");
     }else{
