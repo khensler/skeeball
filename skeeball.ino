@@ -12,7 +12,8 @@
 
 //7 Segment setup
 #define NUM_LEDS 7
-#define DATA_PIN 3
+#define DATA_PIN 32
+CRGB leds[NUM_LEDS];
 
 // Setup Async Servers
 
@@ -169,6 +170,9 @@ void do_ball(){
     Serial.printf("Ball: %d\n", ball);
     //Send Data to connected Websocket Clients
     do_send_data();
+    //Display Ball Counter
+    displayNumber(0,ball);
+    FastLED.show();
   }
 }
 
@@ -244,7 +248,8 @@ void setup() {
   
   //Setup LEDS
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);  // GRB ordering is typical
-
+  displayNumber(0,0);
+  FastLED.show();
   //Add webserver and sebsocket Handlers
 
   ws.onEvent(onWsEvent);
