@@ -47,6 +47,7 @@ bool looping_enable=false;
 //Timer 
 
 hw_timer_t * timer = NULL;
+hw_timer_t * timer1 = NULL;
 
 //Handle Websocket Events
 
