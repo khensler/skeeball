@@ -38,6 +38,8 @@ int debounce_ball = 150;
 int ball = 0;
 int balls_game = 9;
 int game_on = 0;
+int number_loop_millis = 0;
+int number_loop = 0;
 char data[400];
 bool send_data=false;
 
@@ -198,7 +200,19 @@ void displayNumber(int startindex, int number) {
   }
 }
 
-
+void displayNumerLoop(int number){
+  byte numbers[] = {
+    0b01110110,
+    0b00110111,
+    0b01010111,
+    0b01100111,
+    0b01110011,
+    0b01110101,
+  };
+  for (int i = 0; i < 7; i++) {
+    leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+  }
+}
 void setup() {
   Serial.begin(115200);
   //Check for SPIFFS file system to host web content
@@ -346,4 +360,14 @@ void loop() {
     send_data = false;
   }
   //Serial.println(digitalRead(score_pin));
+  if (game_on==0){
+    if (number_loop_millis< millis()+500){
+      number_loop_millis = millis();
+      displayNumerLoop(number_loop);
+      number_loop++;
+      if (number_loop == 6){
+        number_loop=0;
+      }
+    }
+  }
 }
