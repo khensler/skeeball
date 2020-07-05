@@ -173,8 +173,8 @@ void do_ball(){
     //Send Data to connected Websocket Clients
     do_send_data();
     //Display Ball Counter
-    displayNumber(0,ball);
-    FastLED.show();
+    //displayNumber(0,ball);
+    //FastLED.show();
   }
 }
 
