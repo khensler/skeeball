@@ -201,6 +201,7 @@ void displayNumber(int startindex, int number) {
 }
 
 void displayNumerLoop(int number){
+  int startindex = 0;
   byte numbers[] = {
     0b01110110,
     0b00110111,
