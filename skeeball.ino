@@ -362,7 +362,7 @@ void loop() {
   }
   //Serial.println(digitalRead(score_pin));
   if (game_on==0){
-    if (number_loop_millis< millis()+500){
+    if (number_loop_millis < millis()-250){
       number_loop_millis = millis();
       displayNumerLoop(number_loop);
       FastLED.show();
