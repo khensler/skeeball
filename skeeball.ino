@@ -365,6 +365,7 @@ void loop() {
     if (number_loop_millis< millis()+500){
       number_loop_millis = millis();
       displayNumerLoop(number_loop);
+      FastLED.show();
       number_loop++;
       if (number_loop == 6){
         number_loop=0;
