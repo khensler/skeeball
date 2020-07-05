@@ -42,6 +42,7 @@ int number_loop_millis = 0;
 int number_loop = 0;
 char data[400];
 bool send_data=false;
+bool looping_enable=false;
 
 //Timer 
 
@@ -168,6 +169,7 @@ void do_ball(){
     //If played balls is >= to balls/game disable game
     if (ball >= balls_game){
       game_on = 0;
+      timerAlarmEnable(timer1);
     }
     Serial.printf("Ball: %d\n", ball);
     //Send Data to connected Websocket Clients
@@ -214,6 +216,12 @@ void displayNumerLoop(int number){
     leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
   }
 }
+
+void onGameOver(){
+  looping_enable=true;
+}
+
+
 void setup() {
   Serial.begin(115200);
   //Check for SPIFFS file system to host web content
@@ -328,6 +336,12 @@ void setup() {
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 10000000, false);
   
+  //Setup Game over timer
+
+  timer1 = timerBegin(1,80000000, true);
+  timerAttachInterrupt(timer1,&onGameOver,true);
+  timerAlarmWrite(timer1,60,false)
+
   //Reset Values 
 
   score=0;
@@ -361,7 +375,9 @@ void loop() {
     send_data = false;
   }
   //Serial.println(digitalRead(score_pin));
-  if (game_on==0){
+
+  //display looping on digits if game not being played
+  if ((game_on==0) && (looping_enable = true)){
     if (number_loop_millis < millis()-100){
       number_loop_millis = millis();
       displayNumerLoop(number_loop);
