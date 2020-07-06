@@ -344,7 +344,7 @@ void setup() {
 
   timer1 = timerBegin(1,80000000, true);
   timerAttachInterrupt(timer1,&onGameOver,true);
-  timerAlarmWrite(timer1,60,false)
+  timerAlarmWrite(timer1,60,false);
 
   //Reset Values 
 
