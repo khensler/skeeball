@@ -133,6 +133,9 @@ void do_start_game(){
       ball = 0;
       Serial.print("Game Start");
     }
+    //disable loop on 7 seg
+    looping_enable=false;
+    //send data to websockets
     do_send_data();
     //Release the balls
     ball_release();
