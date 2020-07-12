@@ -40,14 +40,19 @@ int balls_game = 9;
 int game_on = 0;
 int number_loop_millis = 0;
 int number_loop = 0;
+int number_loop_timer = 0;
 char data[400];
-bool send_data=false;
-bool looping_enable=false;
+volatile bool send_data=false;
+bool looping_enable=true;
+bool ball_release_bool = false;
+int ball_release_millis = 0;
+
 
 //Timer 
 
 hw_timer_t * timer = NULL;
-hw_timer_t * timer1 = NULL;
+//hw_timer_t * timer1 = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 //Handle Websocket Events
 
@@ -86,25 +91,30 @@ void ball_release(){
 
   Serial.println("Ball Release");
   digitalWrite(ball_release_pin,1);
+  ball_release_bool = true;
+  ball_release_millis = millis();
   
   //Enable Timer to turn off Solenoid
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 10000000, false);
-  timerAlarmEnable(timer);
+  //timer = timerBegin(0, 80, true);
+  //timerAttachInterrupt(timer, onTimer, true);
+  //timerAlarmWrite(timer, 10000000, false);
+  //timerAlarmEnable(timer);
 }
 
-void onTimer() {
-  //Turn Off Ball Release Solenoid
-  Serial.println("End Release");
-  digitalWrite(ball_release_pin,0);
+//void onTimer() {
+//  portENTER_CRITICAL_ISR(&timerMux);
+//  //Turn Off Ball Release Solenoid
+//  Serial.println("End Release");
+//  digitalWrite(ball_release_pin,0);
 
   //Reset Timer Configuration
 
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 10000000, false);
-}
+//  timer = timerBegin(0, 80, true);
+//  timerAttachInterrupt(timer, onTimer, true);
+//  timerAlarmWrite(timer, 10000000, false);
+  
+//  portEXIT_CRITICAL_ISR(&timerMux);
+//}
 
 void do_send_data(){
   //Set Send Data from Inturrupt Handler
@@ -173,14 +183,11 @@ void do_ball(){
     //If played balls is >= to balls/game disable game
     if (ball >= balls_game){
       game_on = 0;
-      timerAlarmEnable(timer1);
+      number_loop_timer = millis();
     }
     Serial.printf("Ball: %d\n", ball);
     //Send Data to connected Websocket Clients
     do_send_data();
-    //Display Ball Counter
-    //displayNumber(0,ball);
-    //FastLED.show();
   }
 }
 
@@ -220,11 +227,6 @@ void displayNumerLoop(int number){
     leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
   }
 }
-
-void onGameOver(){
-  looping_enable=true;
-}
-
 
 void setup() {
   Serial.begin(115200);
@@ -330,21 +332,9 @@ void setup() {
 
   ArduinoOTA.begin();
 
-  //Delya to prevent false inital score and ball count
+  //Delay to prevent false inital score and ball count
 
   delay(1000);
-  
-  //Setup ball release Solenoid timer 
-
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 10000000, false);
-  
-  //Setup Game over timer
-
-  timer1 = timerBegin(1,80000000, true);
-  timerAttachInterrupt(timer1,&onGameOver,true);
-  timerAlarmWrite(timer1,60,false);
 
   //Reset Values 
 
@@ -380,8 +370,26 @@ void loop() {
   }
   //Serial.println(digitalRead(score_pin));
 
+  //ball release timer
+  if (ball_release_bool){
+    if (ball_release_millis < millis() - (1000*10)){
+        Serial.println("End Release");
+        digitalWrite(ball_release_pin,0);
+        ball_release_bool = false;
+    }
+  }
+  
+  //looping digits timer
+  if (game_on == 0){
+    if (looping_enable == false){
+      if (number_loop_timer+(60*1*1000)  < millis()){
+        Serial.println("Loop Enabled");
+        looping_enable = true;
+     }
+    } 
+  }
   //display looping on digits if game not being played
-  if ((game_on==0) && (looping_enable = true)){
+  if ((game_on==0) && (looping_enable == true)){
     if (number_loop_millis < millis()-100){
       number_loop_millis = millis();
       displayNumerLoop(number_loop);
