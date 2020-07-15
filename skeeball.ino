@@ -237,8 +237,19 @@ void displayNumerLoop(int number){
     0b01110011,
     0b01110101,
   };
-  for (int i = 0; i < 7; i++) {
-    leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+  byte numbers1[] = {
+    0b0111110,
+    0b1011111,
+    0b1101111,
+    0b1110111,
+    0b1111011,
+    0b1111101,
+  };
+  for (int i = 0; i <= 6; i++) {
+    leds[i] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+    if(i<6) {leds[i+7] = ((numbers1[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;}
+    leds[i+13] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+    leds[i+20] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
   }
 }
 
@@ -270,7 +281,7 @@ void setup() {
 
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("WiFi Failed!\n");
-    return;
+    //return;
   }
 
   //Print IP.  Also avalbile via multicast DNS from OTA
@@ -375,21 +386,22 @@ void loop() {
   //Send data to WebSockets
   if (send_data == true){
     displayNumber(0,ball);
-    displayNumber(3,0);
+    displayNumber(1,0);
     if(score == 0){
-      displayNumber(1,0);
+      //displayNumber(1,0);
       displayNumber(2,10);
       displayNumber(3,10);
     }
     if (score > 0){
       displayNumber(2,(score/10U) % 10);
+      //Serial.printf("Second score digit: %d",(score/10U) % 10);
     }
-    if (score<100){
-      displayNumber(1,0);
+    if (score>=100){
+      displayNumber(3,(score/100U) % 10);
+      //Serial.printf("Third score digit: %d",(score/100U) % 10);
     }else{
-      displayNumber(1,(score/100U) % 10);
+      displayNumber(3,10);
     }
-
     FastLED.show();
     if(score == 0){
       ws.printfAll("{\"S\":\"000\"}");
@@ -423,6 +435,7 @@ void loop() {
   //display looping on digits if game not being played
   if ((game_on==0) && (looping_enable == true)){
     if (number_loop_millis < millis()-100){
+    //if (number_loop_millis < millis()-1000){
       number_loop_millis = millis();
       displayNumerLoop(number_loop);
       FastLED.show();
