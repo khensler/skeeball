@@ -11,8 +11,9 @@
 #include <FastLED.h>
 
 //7 Segment setup
-#define NUM_LEDS 7
+#define NUM_LEDS 27
 #define DATA_PIN 32
+
 CRGB leds[NUM_LEDS];
 
 // Setup Async Servers
@@ -192,25 +193,38 @@ void do_ball(){
 }
 
 void displayNumber(int startindex, int number) {
+  int ledstart;
   //startindex in digit position.  Multiplied by 7 for each digit. 
   //number is number to display (not wired in stanard 7 segment display because i'm silly
-  startindex = startindex*7;
   byte numbers[] = {
-    0b01110111, // 0    
-    0b01100000, // 1
-    0b01011101, // 2
-    0b01111001, // 3
-    0b01101010, // 4
-    0b00111011, // 5
-    0b00111111, // 6
-    0b01100001, // 7
-    0b01111111, // 8
-    0b01101011, // 9   
+  0b01110111, // 0    
+  0b01100000, // 1
+  0b01011101, // 2
+  0b01111001, // 3
+  0b01101010, // 4
+  0b00111011, // 5
+  0b00111111, // 6
+  0b01100001, // 7
+  0b01111111, // 8
+  0b01101011, // 9   
+  0b00000000,
   };
-
-  for (int i = 0; i < 7; i++) {
-    leds[i + startindex] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+  if (startindex>1){
+    ledstart = (startindex * 7) - 1;
+  }else{
+    ledstart = startindex * 7;
   }
+  if (startindex == 1 ){
+    byte number = 0b01111111; //0
+    for (int i = 0; i < 6; i++) {
+      leds[i + ledstart] = ((number & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+    }
+  }else{
+    for (int i = 0; i < 7; i++) {
+      leds[i + ledstart] = ((numbers[number] & 1 << i) == 1 << i) ? CRGB::Red : CRGB::Black;
+    }
+  }
+  
 }
 
 void displayNumerLoop(int number){
@@ -278,6 +292,9 @@ void setup() {
   //Setup LEDS
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);  // GRB ordering is typical
   displayNumber(0,0);
+  displayNumber(1,0);
+  displayNumber(2,0);
+  displayNumber(3,0);
   FastLED.show();
   //Add webserver and sebsocket Handlers
 
@@ -358,6 +375,21 @@ void loop() {
   //Send data to WebSockets
   if (send_data == true){
     displayNumber(0,ball);
+    displayNumber(3,0);
+    if(score == 0){
+      displayNumber(1,0);
+      displayNumber(2,10);
+      displayNumber(3,10);
+    }
+    if (score > 0){
+      displayNumber(2,(score/10U) % 10);
+    }
+    if (score<100){
+      displayNumber(1,0);
+    }else{
+      displayNumber(1,(score/100U) % 10);
+    }
+
     FastLED.show();
     if(score == 0){
       ws.printfAll("{\"S\":\"000\"}");
@@ -372,7 +404,7 @@ void loop() {
 
   //ball release timer
   if (ball_release_bool){
-    if (ball_release_millis < millis() - (1000*10)){
+    if (ball_release_millis < millis() - (1000*7)){
         Serial.println("End Release");
         digitalWrite(ball_release_pin,0);
         ball_release_bool = false;
