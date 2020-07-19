@@ -142,7 +142,7 @@ void do_start_game(){
       game_on = 1;
       score = 0;
       ball = 0;
-      Serial.print("Game Start");
+      Serial.println("Game Start");
     }
     //disable loop on 7 seg
     looping_enable=false;
